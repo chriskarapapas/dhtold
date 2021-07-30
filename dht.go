@@ -164,8 +164,7 @@ var (
 // Please note that being connected to a DHT peer does not necessarily imply that it's also in the DHT Routing Table.
 // If the Routing Table has more than "minRTRefreshThreshold" peers, we consider a peer as a Routing Table candidate ONLY when
 // we successfully get a query response from it OR if it send us a query.
-func New(ctx context.Context, h host.Host, options ...Option) (*IpfsDHT, error) {
-	fmt.Errorf("ASFISTAAAA")
+func New(ctx context.Context, h host.Host, options ...Option) (*IpfsDHT, error,int) {
 	var cfg dhtcfg.Config
 	if err := cfg.Apply(append([]Option{dhtcfg.Defaults}, options...)...); err != nil {
 		return nil, err
@@ -238,8 +237,8 @@ func New(ctx context.Context, h host.Host, options ...Option) (*IpfsDHT, error) 
 	dht.plk.Unlock()
 
 	dht.proc.Go(dht.populatePeers)
-
-	return dht, nil
+	test := 3
+	return dht, nil,test
 }
 
 // NewDHT creates a new DHT object with the given peer as the 'local' host.
