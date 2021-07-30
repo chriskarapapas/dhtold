@@ -165,21 +165,22 @@ var (
 // If the Routing Table has more than "minRTRefreshThreshold" peers, we consider a peer as a Routing Table candidate ONLY when
 // we successfully get a query response from it OR if it send us a query.
 func New(ctx context.Context, h host.Host, options ...Option) (*IpfsDHT, error,int) {
+	test := 3
 	var cfg dhtcfg.Config
 	if err := cfg.Apply(append([]Option{dhtcfg.Defaults}, options...)...); err != nil {
-		return nil, err
+		return nil, err, test
 	}
 	if err := cfg.ApplyFallbacks(h); err != nil {
-		return nil, err
+		return nil, err, test
 	}
 
 	if err := cfg.Validate(); err != nil {
-		return nil, err
+		return nil, err, test
 	}
 
 	dht, err := makeDHT(ctx, h, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create DHT, err=%s", err)
+		return nil, fmt.Errorf("failed to create DHT, err=%s", err), test
 	}
 
 	dht.autoRefresh = cfg.RoutingTable.AutoRefresh
@@ -193,7 +194,7 @@ func New(ctx context.Context, h host.Host, options ...Option) (*IpfsDHT, error,i
 	dht.msgSender = net.NewMessageSenderImpl(h, dht.protocols)
 	dht.protoMessenger, err = pb.NewProtocolMessenger(dht.msgSender, pb.WithValidator(dht.Validator))
 	if err != nil {
-		return nil, err
+		return nil, err, test
 	}
 
 	dht.testAddressUpdateProcessing = cfg.TestAddressUpdateProcessing
@@ -205,19 +206,19 @@ func New(ctx context.Context, h host.Host, options ...Option) (*IpfsDHT, error,i
 	case ModeAutoServer, ModeServer:
 		dht.mode = modeServer
 	default:
-		return nil, fmt.Errorf("invalid dht mode %d", cfg.Mode)
+		return nil, fmt.Errorf("invalid dht mode %d", cfg.Mode), test
 	}
 
 	if dht.mode == modeServer {
 		if err := dht.moveToServerMode(); err != nil {
-			return nil, err
+			return nil, err, test
 		}
 	}
 
 	// register for event bus and network notifications
 	sn, err := newSubscriberNotifiee(dht)
 	if err != nil {
-		return nil, err
+		return nil, err, test
 	}
 	dht.proc.Go(sn.subscribe)
 	// handle providers
@@ -237,7 +238,6 @@ func New(ctx context.Context, h host.Host, options ...Option) (*IpfsDHT, error,i
 	dht.plk.Unlock()
 
 	dht.proc.Go(dht.populatePeers)
-	test := 3
 	return dht, nil,test
 }
 
